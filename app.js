@@ -4,7 +4,7 @@ const express = require("express");
 const path = require("path");
 const { open } = require("sqlite");
 const sqlite3 = require("sqlite3");
-const { format, compareAsc } = require("date-fns");
+const { format, isValid } = require("date-fns");
 
 // Creating Express Instance and Exporting it
 
@@ -45,6 +45,37 @@ const checkInputs = (request, response, next) => {
     category = "",
     dueDate = "",
   } = request.body;
+  console.log(status, priority, todo, category, dueDate);
+
+  if (["TO DO", "IN PROGRESS", "DONE", ""].includes(status) === false) {
+    response.status(400);
+    response.send("Invalid Todo Status");
+  } else if (["HIGH", "MEDIUM", "LOW", ""].includes(priority) === false) {
+    response.status(400);
+    response.send("Invalid Todo Priority");
+  } else if (["WORK", "HOME", "LEARNING", ""].includes(category) === false) {
+    response.status(400);
+    response.send("Invalid Todo Category");
+  } else if (!(dueDate === "")) {
+    if (!isValid(new Date(dueDate))) {
+      response.status(400);
+      response.send("Invalid Due Date");
+    } else {
+      next();
+    }
+  } else {
+    next();
+  }
+};
+
+const checkInputsGetTodo = (request, response, next) => {
+  let {
+    status = "",
+    priority = "",
+    todo = "",
+    category = "",
+    dueDate = "",
+  } = request.query;
 
   if (["TO DO", "IN PROGRESS", "DONE", ""].includes(status) === false) {
     response.status(400);
@@ -66,7 +97,7 @@ const convertDBObjectToDisplayObject = (eachResult) => ({
   priority: eachResult.priority,
   category: eachResult.category,
   status: eachResult.status,
-  dueData: eachResult.due_date,
+  dueDate: eachResult.due_date,
 });
 
 const convertDate = (date) => {
@@ -80,7 +111,7 @@ const convertDate = (date) => {
 
 // API 1 - Get Todo's
 
-app.get("/todos/", async (request, response) => {
+app.get("/todos/", checkInputsGetTodo, async (request, response) => {
   let {
     status = "",
     priority = "",
@@ -124,10 +155,23 @@ app.get("/todos/:todoId/", async (request, response) => {
 
 app.get("/agenda/", async (request, response) => {
   let { date } = request.query;
-  properDate = convertDate(date);
-  const getAgendaQuery = `select * from todo where due_date = "${properDate}";`;
-  const getAgenda = await db.all(getAgendaQuery);
-  response.send(getAgenda.map((item) => convertDBObjectToDisplayObject(item)));
+  console.log(date);
+  if (!(date === "")) {
+    if (!isValid(new Date(date))) {
+      response.status(400);
+      response.send("Invalid Due Date");
+    } else {
+      const properDate = convertDate(date);
+      const getAgendaQuery = `select * from todo where due_date = "${properDate}";`;
+      const getAgenda = await db.all(getAgendaQuery);
+      response.send(
+        getAgenda.map((item) => convertDBObjectToDisplayObject(item))
+      );
+    }
+  } else {
+    response.status(400);
+    response.send("Invalid Due Date");
+  }
 });
 
 // API 4 - Create Todo
@@ -136,7 +180,6 @@ app.post("/todos/", checkInputs, async (request, response) => {
   let { id, todo, priority, status, category, dueDate } = request.body;
   dueDate = convertDate(dueDate);
   const createTodoQuery = `Insert into todo (id,todo,priority,status,category,due_date) values (${id},"${todo}","${priority}","${status}","${category}","${dueDate}");`;
-  console.log(createTodoQuery);
   await db.run(createTodoQuery);
   response.send("Todo Successfully Added");
 });

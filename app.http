@@ -1,18 +1,18 @@
 // API 1
 
-GET http://localhost:3000/todos/?category=WORK&status=DONE
+GET http://localhost:3000/todos/?category=HOME&dueDate=2021-02-22
 
 ###
 
 // API - 2
 
-GET http://localhost:3000/todos/80
+GET http://localhost:3000/todos/1
 
 ###
 
 // API - 3
 
-GET http://localhost:3000/agenda/?date=2021-2-22
+GET http://localhost:3000/agenda/?date=2021-02-22
 
 ###
 
@@ -27,18 +27,18 @@ Content-Type: application/json
   "priority": "LOW",
   "status": "DONE",
   "category": "LEARNING",
-  "dueDate": "2021-2-22"
+  "dueDate": "2021-07-22"
 }
 
 ###
 
 // API 5 - Update Todo
 
-PUT http://localhost:3000/todos/6/
+PUT http://localhost:3000/todos/7/
 Content-Type: application/json
 
 {
-  "dueDate": "2021-4-13"
+  "dueDate": "2022-8-14"
 }
 
 ###
